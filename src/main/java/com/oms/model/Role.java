@@ -1,0 +1,10 @@
+package com.oms.model;
+
+public enum Role {
+    ADMINISTRATOR,
+    BUSINESS_ANALYST,
+    FINANCIAL_MANAGER,
+    PURCHASING_OFFICER,
+    PRODUCT_MANAGER,
+    SALES_REPRESENTATIVE
+}
