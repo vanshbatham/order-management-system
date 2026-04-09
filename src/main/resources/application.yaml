@@ -22,4 +22,4 @@ server:
 app:
   jwt:
     secret: ${JWT_SECRET}
-    expiration: 864000000 # 24 hours in ms
+    expiration-ms: 864000000 # 24 hours in ms
