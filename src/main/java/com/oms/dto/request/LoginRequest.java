@@ -6,6 +6,7 @@ import lombok.Setter;
 @Getter
 @Setter
 public class LoginRequest {
-    private String username;
+    private String email;
     private String password;
+    private String role;  // selected from dropdown on frontend
 }
