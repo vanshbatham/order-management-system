@@ -2,6 +2,9 @@ package com.oms.service;
 
 import com.oms.dto.request.BOMRequest;
 import com.oms.dto.response.BOMResponse;
+import com.oms.exception.BadRequestException;
+import com.oms.exception.DuplicateResourceException;
+import com.oms.exception.ResourceNotFoundException;
 import com.oms.model.Product;
 import com.oms.model.ProductBOM;
 import com.oms.repository.ProductBOMRepository;
@@ -24,21 +27,21 @@ public class BOMService {
 
         // validate product exists
         Product product = productRepository.findById(request.getProductId())
-                .orElseThrow(() -> new RuntimeException("Product not found with id: " + request.getProductId()));
+                .orElseThrow(() -> new ResourceNotFoundException("Product not found with id: " + request.getProductId()));
 
         // validate component exists
         Product component = productRepository.findById(request.getComponentId())
-                .orElseThrow(() -> new RuntimeException("Component not found with id: " + request.getComponentId()));
+                .orElseThrow(() -> new ResourceNotFoundException("Component not found with id: " + request.getComponentId()));
 
         //a product cannot be its own component
         if (request.getProductId().equals(request.getComponentId())) {
-            throw new RuntimeException("A product cannot be a component of itself");
+            throw new BadRequestException("A product cannot be a component of itself");
         }
 
         //prevent duplicate component in same BOM
         if (productBOMRepository.existsByProduct_ProductIdAndComponent_ProductId(
                 request.getProductId(), request.getComponentId())) {
-            throw new RuntimeException("This component already exists in the BOM for this product");
+            throw new DuplicateResourceException("This component already exists in the BOM for this product");
         }
 
         ProductBOM bom = new ProductBOM();
@@ -53,7 +56,7 @@ public class BOMService {
 
         // validate product exists
         if (!productRepository.existsById(productId)) {
-            throw new RuntimeException("Product not found with id: " + productId);
+            throw new ResourceNotFoundException("Product not found with id: " + productId);
         }
 
         return productBOMRepository.findByProduct_ProductId(productId)
@@ -64,7 +67,7 @@ public class BOMService {
 
     public void removeComponent(Long bomId) {
         if (!productBOMRepository.existsById(bomId)) {
-            throw new RuntimeException("BOM entry not found with id: " + bomId);
+            throw new ResourceNotFoundException("BOM entry not found with id: " + bomId);
         }
         productBOMRepository.deleteById(bomId);
     }

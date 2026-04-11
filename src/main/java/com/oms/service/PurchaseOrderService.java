@@ -6,6 +6,9 @@ import com.oms.dto.request.SupplierRequest;
 import com.oms.dto.response.PurchaseOrderItemResponse;
 import com.oms.dto.response.PurchaseOrderResponse;
 import com.oms.dto.response.SupplierResponse;
+import com.oms.exception.BadRequestException;
+import com.oms.exception.DuplicateResourceException;
+import com.oms.exception.ResourceNotFoundException;
 import com.oms.model.*;
 import com.oms.repository.ProductRepository;
 import com.oms.repository.PurchaseOrderRepository;
@@ -31,7 +34,7 @@ public class PurchaseOrderService {
     // create supplier
     public SupplierResponse createSupplier(SupplierRequest request) {
         if (supplierRepository.existsByEmail(request.getEmail())) {
-            throw new RuntimeException("Supplier with this email already exists");
+            throw new DuplicateResourceException("Supplier with this email already exists");
         }
 
         Supplier supplier = new Supplier();
@@ -57,7 +60,7 @@ public class PurchaseOrderService {
 
         //validate supplier
         Supplier supplier = supplierRepository.findById(request.getSupplierId())
-                .orElseThrow(() -> new RuntimeException("Supplier not found with id: " + request.getSupplierId()));
+                .orElseThrow(() -> new ResourceNotFoundException("Supplier not found with id: " + request.getSupplierId()));
 
         //build purchase order
         PurchaseOrder po = new PurchaseOrder();
@@ -71,7 +74,7 @@ public class PurchaseOrderService {
         for (PurchaseOrderItemRequest itemRequest : request.getItems()) {
 
             Product product = productRepository.findById(itemRequest.getProductId())
-                    .orElseThrow(() -> new RuntimeException("Product not found with id: " + itemRequest.getProductId()));
+                    .orElseThrow(() -> new ResourceNotFoundException("Product not found with id: " + itemRequest.getProductId()));
 
             PurchaseOrderItem item = new PurchaseOrderItem();
             item.setPurchaseOrder(po);
@@ -97,14 +100,14 @@ public class PurchaseOrderService {
 
     public PurchaseOrderResponse getPurchaseOrderById(Long id) {
         PurchaseOrder po = purchaseOrderRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Purchase order not found with id: " + id));
+                .orElseThrow(() -> new ResourceNotFoundException("Purchase order not found with id: " + id));
         return mapToPOResponse(po);
     }
 
     @Transactional
     public PurchaseOrderResponse updateStatus(Long id, String status) {
         PurchaseOrder po = purchaseOrderRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Purchase order not found with id: " + id));
+                .orElseThrow(() -> new ResourceNotFoundException("Purchase order not found with id: " + id));
 
         PurchaseOrderStatus newStatus = PurchaseOrderStatus.valueOf(status.toUpperCase());
 
@@ -124,10 +127,10 @@ public class PurchaseOrderService {
     @Transactional
     public void cancelPurchaseOrder(Long id) {
         PurchaseOrder po = purchaseOrderRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Purchase order not found with id: " + id));
+                .orElseThrow(() -> new ResourceNotFoundException("Purchase order not found with id: " + id));
 
         if (po.getStatus() == PurchaseOrderStatus.RECEIVED) {
-            throw new RuntimeException("Cannot cancel an already received purchase order");
+            throw new BadRequestException("Cannot cancel an already received purchase order");
         }
 
         po.setStatus(PurchaseOrderStatus.CANCELLED);

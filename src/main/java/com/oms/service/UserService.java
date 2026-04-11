@@ -5,6 +5,8 @@ import com.oms.dto.request.RegisterRequest;
 import com.oms.dto.request.UpdateUserRequest;
 import com.oms.dto.response.AuthResponse;
 import com.oms.dto.response.UserResponse;
+import com.oms.exception.DuplicateResourceException;
+import com.oms.exception.ResourceNotFoundException;
 import com.oms.model.Role;
 import com.oms.model.User;
 import com.oms.repository.UserRepository;
@@ -38,7 +40,7 @@ public class UserService {
     public UserResponse registerUser(RegisterRequest request) {
 
         if (userRepository.existsByEmail(request.getEmail())) {
-            throw new RuntimeException("Email already registered");
+            throw new DuplicateResourceException("Email already registered");
         }
 
         User user = new User();
@@ -64,7 +66,7 @@ public class UserService {
 
         // load user from db
         User user = userRepository.findByEmail(request.getEmail())
-                .orElseThrow(() -> new RuntimeException("User not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("User not found"));
 
         // check if the selected role matches the user's actual role
         Role selectedRole = Role.valueOf(request.getRole().toUpperCase());
@@ -94,13 +96,13 @@ public class UserService {
 
     public UserResponse getUserById(Long id) {
         User user = userRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("User not found with id: " + id));
+                .orElseThrow(() -> new ResourceNotFoundException("User not found with id: " + id));
         return mapToResponse(user);
     }
 
     public UserResponse updateUser(Long id, UpdateUserRequest request) {
         User user = userRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("User not found with id: " + id));
+                .orElseThrow(() -> new ResourceNotFoundException("User not found with id: " + id));
 
         if (request.getName() != null) {
             user.setName(request.getName());
@@ -117,7 +119,7 @@ public class UserService {
 
     public void deleteUser(Long id) {
         if (!userRepository.existsById(id)) {
-            throw new RuntimeException("User not found with id: " + id);
+            throw new ResourceNotFoundException("User not found with id: " + id);
         }
         userRepository.deleteById(id);
     }

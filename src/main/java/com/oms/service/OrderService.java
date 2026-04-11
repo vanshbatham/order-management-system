@@ -6,6 +6,9 @@ import com.oms.dto.request.OrderItemRequest;
 import com.oms.dto.response.CustomerResponse;
 import com.oms.dto.response.OrderItemResponse;
 import com.oms.dto.response.OrderResponse;
+import com.oms.exception.BadRequestException;
+import com.oms.exception.DuplicateResourceException;
+import com.oms.exception.ResourceNotFoundException;
 import com.oms.model.*;
 import com.oms.repository.CustomerRepository;
 import com.oms.repository.ProductRepository;
@@ -31,7 +34,7 @@ public class OrderService {
     // customer operations
     public CustomerResponse createCustomer(CustomerRequest request) {
         if (customerRepository.existsByEmail(request.getEmail())) {
-            throw new RuntimeException("Customer with this email already exists");
+            throw new DuplicateResourceException("Customer with this email already exists");
         }
 
         Customer customer = new Customer();
@@ -56,7 +59,7 @@ public class OrderService {
 
         // validate customer exists
         Customer customer = customerRepository.findById(request.getCustomerId())
-                .orElseThrow(() -> new RuntimeException("Customer not found with id: " + request.getCustomerId()));
+                .orElseThrow(() -> new ResourceNotFoundException("Customer not found with id: " + request.getCustomerId()));
 
         // build order
         SalesOrder order = new SalesOrder();
@@ -70,11 +73,11 @@ public class OrderService {
         for (OrderItemRequest itemRequest : request.getItems()) {
 
             Product product = productRepository.findById(itemRequest.getProductId())
-                    .orElseThrow(() -> new RuntimeException("Product not found with id: " + itemRequest.getProductId()));
+                    .orElseThrow(() -> new ResourceNotFoundException("Product not found with id: " + itemRequest.getProductId()));
 
             // check stock availability
             if (product.getQuantityInStock() < itemRequest.getQuantity()) {
-                throw new RuntimeException("Insufficient stock for product: " + product.getProductName()
+                throw new BadRequestException("Insufficient stock for: " + product.getProductName()
                         + ". Available: " + product.getQuantityInStock());
             }
 
@@ -107,7 +110,7 @@ public class OrderService {
 
     public OrderResponse getOrderById(Long id) {
         SalesOrder order = salesOrderRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Order not found with id: " + id));
+                .orElseThrow(() -> new ResourceNotFoundException("Order not found with id: " + id));
         return mapToOrderResponse(order);
     }
 
@@ -122,10 +125,10 @@ public class OrderService {
     @Transactional
     public void cancelOrder(Long id) {
         SalesOrder order = salesOrderRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Order not found with id: " + id));
+                .orElseThrow(() -> new ResourceNotFoundException("Order not found with id: " + id));
 
         if (order.getStatus() == OrderStatus.DELIVERED) {
-            throw new RuntimeException("Cannot cancel a delivered order");
+            throw new BadRequestException("Cannot cancel a delivered order");
         }
 
         // restore stock for each item
