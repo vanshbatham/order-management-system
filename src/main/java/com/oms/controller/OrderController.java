@@ -3,6 +3,7 @@ package com.oms.controller;
 import com.oms.dto.request.CreateOrderRequest;
 import com.oms.dto.response.OrderResponse;
 import com.oms.service.OrderService;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -20,7 +21,7 @@ public class OrderController {
 
     @PostMapping
     @PreAuthorize("hasAnyAuthority('SALES_REPRESENTATIVE', 'ADMINISTRATOR')")
-    public ResponseEntity<OrderResponse> createOrder(@RequestBody CreateOrderRequest request) {
+    public ResponseEntity<OrderResponse> createOrder(@Valid @RequestBody CreateOrderRequest request) {
         return new ResponseEntity<>(orderService.createOrder(request), HttpStatus.CREATED);
     }
 

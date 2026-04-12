@@ -3,6 +3,7 @@ package com.oms.controller;
 import com.oms.dto.request.CustomerRequest;
 import com.oms.dto.response.CustomerResponse;
 import com.oms.service.OrderService;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -20,7 +21,7 @@ public class CustomerController {
 
     @PostMapping
     @PreAuthorize("hasAnyAuthority('SALES_REPRESENTATIVE', 'ADMINISTRATOR')")
-    public ResponseEntity<CustomerResponse> createCustomer(@RequestBody CustomerRequest request) {
+    public ResponseEntity<CustomerResponse> createCustomer(@Valid @RequestBody CustomerRequest request) {
         return new ResponseEntity<>(orderService.createCustomer(request), HttpStatus.CREATED);
     }
 

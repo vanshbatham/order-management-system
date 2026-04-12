@@ -3,6 +3,7 @@ package com.oms.controller;
 import com.oms.dto.request.SupplierRequest;
 import com.oms.dto.response.SupplierResponse;
 import com.oms.service.PurchaseOrderService;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -20,7 +21,7 @@ public class SupplierController {
 
     @PostMapping
     @PreAuthorize("hasAnyAuthority('PURCHASING_OFFICER', 'ADMINISTRATOR')")
-    public ResponseEntity<SupplierResponse> createSupplier(@RequestBody SupplierRequest request) {
+    public ResponseEntity<SupplierResponse> createSupplier(@Valid @RequestBody SupplierRequest request) {
         return new ResponseEntity<>(purchaseOrderService.createSupplier(request), HttpStatus.CREATED);
     }
 

@@ -3,6 +3,7 @@ package com.oms.controller;
 import com.oms.dto.request.BOMRequest;
 import com.oms.dto.response.BOMResponse;
 import com.oms.service.BOMService;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -20,7 +21,7 @@ public class BOMController {
 
     @PostMapping
     @PreAuthorize("hasAnyAuthority('PRODUCT_MANAGER', 'ADMINISTRATOR')")
-    public ResponseEntity<BOMResponse> addComponent(@RequestBody BOMRequest request) {
+    public ResponseEntity<BOMResponse> addComponent(@Valid @RequestBody BOMRequest request) {
         return new ResponseEntity<>(bomService.addComponent(request), HttpStatus.CREATED);
     }
 

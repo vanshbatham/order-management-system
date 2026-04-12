@@ -3,6 +3,7 @@ package com.oms.controller;
 import com.oms.dto.request.RecordPaymentRequest;
 import com.oms.dto.response.PaymentResponse;
 import com.oms.service.InvoiceService;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -20,7 +21,7 @@ public class PaymentController {
 
     @PostMapping
     @PreAuthorize("hasAnyAuthority('FINANCIAL_MANAGER', 'ADMINISTRATOR')")
-    public ResponseEntity<PaymentResponse> recordPayment(@RequestBody RecordPaymentRequest request) {
+    public ResponseEntity<PaymentResponse> recordPayment(@Valid @RequestBody RecordPaymentRequest request) {
         return new ResponseEntity<>(invoiceService.recordPayment(request), HttpStatus.CREATED);
     }
 

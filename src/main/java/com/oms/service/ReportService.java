@@ -6,48 +6,69 @@ import com.oms.model.OrderStatus;
 import com.oms.model.SalesOrder;
 import com.oms.repository.*;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
+import java.util.Comparator;
 import java.util.List;
 import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class ReportService {
 
     private final SalesOrderRepository salesOrderRepository;
-
     private final InvoiceRepository invoiceRepository;
-
     private final PaymentRepository paymentRepository;
-
     private final ProductRepository productRepository;
-
     private final CustomerRepository customerRepository;
 
-    //count total orders, counts by status, total order value
+    // order summary report
     public OrderSummaryReport getOrderSummary() {
+
+        log.info("Generating Order Summary Report");
+
+        long totalOrders = salesOrderRepository.count();
+        long pending = salesOrderRepository.countByStatus(OrderStatus.PENDING);
+        long confirmed = salesOrderRepository.countByStatus(OrderStatus.CONFIRMED);
+        long processing = salesOrderRepository.countByStatus(OrderStatus.PROCESSING);
+        long shipped = salesOrderRepository.countByStatus(OrderStatus.SHIPPED);
+        long delivered = salesOrderRepository.countByStatus(OrderStatus.DELIVERED);
+        long cancelled = salesOrderRepository.countByStatus(OrderStatus.CANCELLED);
+        double totalValue = salesOrderRepository.sumTotalOrderValue();
+
+        log.info("Order Summary: total={}, delivered={}, cancelled={}, totalValue={}",
+                totalOrders, delivered, cancelled, totalValue);
+
         return new OrderSummaryReport(
-                salesOrderRepository.count(),
-                salesOrderRepository.countByStatus(OrderStatus.PENDING),
-                salesOrderRepository.countByStatus(OrderStatus.CONFIRMED),
-                salesOrderRepository.countByStatus(OrderStatus.PROCESSING),
-                salesOrderRepository.countByStatus(OrderStatus.SHIPPED),
-                salesOrderRepository.countByStatus(OrderStatus.DELIVERED),
-                salesOrderRepository.countByStatus(OrderStatus.CANCELLED),
-                salesOrderRepository.sumTotalOrderValue()
+                totalOrders,
+                pending,
+                confirmed,
+                processing,
+                shipped,
+                delivered,
+                cancelled,
+                totalValue
         );
     }
 
-    // count total invoiced, total collected, outstanding amount, invoice counts by status
+    // revenue report
     public RevenueReport getRevenueReport() {
+
+        log.info("Generating Revenue Report");
+
         double totalInvoiced = invoiceRepository.sumTotalInvoiced();
         double totalCollected = invoiceRepository.sumTotalCollected();
+        double outstanding = totalInvoiced - totalCollected;
+
+        log.info("Revenue Summary: invoiced={}, collected={}, outstanding={}",
+                totalInvoiced, totalCollected, outstanding);
 
         return new RevenueReport(
                 totalInvoiced,
                 totalCollected,
-                totalInvoiced - totalCollected,  // outstanding
+                outstanding,
                 invoiceRepository.count(),
                 invoiceRepository.countByStatus(InvoiceStatus.PAID),
                 invoiceRepository.countByStatus(InvoiceStatus.PARTIALLY_PAID),
@@ -55,11 +76,12 @@ public class ReportService {
         );
     }
 
-    // low stock report for products at or below threshold, sorted by lowest stock first
+    // low stock report
     public List<LowStockReport> getLowStockReport(int threshold) {
 
-        // return all products where stock is at or below threshold
-        return productRepository.findAll()
+        log.info("Generating Low Stock Report. threshold={}", threshold);
+
+        List<LowStockReport> list = productRepository.findAll()
                 .stream()
                 .filter(p -> p.getQuantityInStock() <= threshold)
                 .map(p -> new LowStockReport(
@@ -68,17 +90,25 @@ public class ReportService {
                         p.getQuantityInStock(),
                         p.getUnitPrice()
                 ))
-                .sorted((a, b) ->
-                        Integer.compare(a.getQuantityInStock(), b.getQuantityInStock())) // lowest stock first
+                .sorted(Comparator.comparingInt(LowStockReport::getQuantityInStock))
                 .collect(Collectors.toList());
+
+        log.info("Low stock items found: {}", list.size());
+
+        return list;
     }
 
-    // customer order report with total orders and total value, sorted by most orders first
+    // customer order report
     public List<CustomerOrderReport> getCustomerOrderReport() {
-        return customerRepository.findAll()
+
+        log.info("Generating Customer Order Report");
+
+        List<CustomerOrderReport> list = customerRepository.findAll()
                 .stream()
                 .map(customer -> {
-                    List<SalesOrder> orders = salesOrderRepository.findByCustomer_CustomerId(customer.getCustomerId());
+
+                    List<SalesOrder> orders =
+                            salesOrderRepository.findByCustomer_CustomerId(customer.getCustomerId());
 
                     double totalValue = orders.stream()
                             .filter(o -> o.getStatus() != OrderStatus.CANCELLED)
@@ -94,13 +124,20 @@ public class ReportService {
                     );
                 })
                 .sorted((a, b) ->
-                        Long.compare(b.getTotalOrders(), a.getTotalOrders())) // most orders first
+                        Long.compare(b.getTotalOrders(), a.getTotalOrders()))
                 .collect(Collectors.toList());
+
+        log.info("Customer report generated for {} customers", list.size());
+
+        return list;
     }
 
-    // payment summary report with total payments and total amount by payment method
+    // payment summary report
     public List<PaymentSummaryReport> getPaymentSummary() {
-        return paymentRepository.findDistinctPaymentMethods()
+
+        log.info("Generating Payment Summary Report");
+
+        List<PaymentSummaryReport> list = paymentRepository.findDistinctPaymentMethods()
                 .stream()
                 .map(method -> new PaymentSummaryReport(
                         method.name(),
@@ -108,5 +145,9 @@ public class ReportService {
                         paymentRepository.sumAmountByPaymentMethod(method)
                 ))
                 .collect(Collectors.toList());
+
+        log.info("Payment summary generated for {} payment methods", list.size());
+
+        return list;
     }
 }
