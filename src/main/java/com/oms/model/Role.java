@@ -1,5 +1,8 @@
 package com.oms.model;
 
+import io.swagger.v3.oas.annotations.media.Schema;
+
+@Schema(description = "Available user roles in the system")
 public enum Role {
     ADMINISTRATOR,
     BUSINESS_ANALYST,
