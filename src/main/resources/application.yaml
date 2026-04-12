@@ -1,7 +1,7 @@
 spring:
   application:
     name: oms
-
+  # Database configuration
   datasource:
     url: ${DB_URL}
     username: ${DB_USERNAME}
@@ -13,7 +13,7 @@ spring:
       connection-timeout: 30000
       idle-timeout: 600000
       max-lifetime: 1800000
-
+  # JPA and Hibernate configuration
   jpa:
     hibernate:
       ddl-auto: update
@@ -27,8 +27,16 @@ spring:
 
 server:
   port: 8080
-
+# JWT configuration
 app:
   jwt:
     secret: ${JWT_SECRET}
     expiration-ms: 86400000
+# API documentation configuration
+springdoc:
+  swagger-ui:
+    path: /swagger-ui.html
+    tags-sorter: alpha
+    operations-sorter: alpha
+  api-docs:
+    path: /v3/api-docs

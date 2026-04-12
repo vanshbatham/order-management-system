@@ -3,6 +3,8 @@ package com.oms.controller;
 import com.oms.dto.request.UpdateUserRequest;
 import com.oms.dto.response.UserResponse;
 import com.oms.service.UserService;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -14,28 +16,33 @@ import java.util.List;
 @RestController
 @RequestMapping("/api/users")
 @RequiredArgsConstructor
+@Tag(name = "User Management", description = "Admin-only user CRUD operations")
 public class UserController {
 
     private final UserService userService;
 
+    @Operation(summary = "Get all users", description = "Returns list of all users. ADMINISTRATOR.")
     @GetMapping
     @PreAuthorize("hasAuthority('ADMINISTRATOR')")
     public ResponseEntity<List<UserResponse>> getAllUsers() {
         return new ResponseEntity<>(userService.getAllUsers(), HttpStatus.OK);
     }
 
+    @Operation(summary = "Get user by ID", description = "Returns a single user by ID. ADMINISTRATOR.")
     @GetMapping("/{id}")
     @PreAuthorize("hasAuthority('ADMINISTRATOR')")
     public ResponseEntity<UserResponse> getUserById(@PathVariable Long id) {
         return new ResponseEntity<>(userService.getUserById(id), HttpStatus.OK);
     }
 
+    @Operation(summary = "Get user by ID", description = "Returns a single user by ID. ADMINISTRATOR.")
     @PutMapping("/{id}")
     @PreAuthorize("hasAuthority('ADMINISTRATOR')")
     public ResponseEntity<UserResponse> updateUser(@PathVariable Long id, @RequestBody UpdateUserRequest request) {
         return new ResponseEntity<>(userService.updateUser(id, request), HttpStatus.OK);
     }
 
+    @Operation(summary = "Update user", description = "Updates user name, email or role. ADMINISTRATOR.")
     @DeleteMapping("/{id}")
     @PreAuthorize("hasAuthority('ADMINISTRATOR')")
     public ResponseEntity<String> deleteUser(@PathVariable Long id) {
